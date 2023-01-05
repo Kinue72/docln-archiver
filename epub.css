@@ -1,0 +1,52 @@
+body {
+    line-height: 1.2em;
+    font-size: 1em;
+}
+
+.reading-content {
+    font-weight: normal;
+    word-break: break-word;
+    letter-spacing: 0;
+    orphans: 1;
+    widows: 1;
+    word-spacing: 0;
+    margin: 0 0 10px 0;
+}
+
+img {
+    max-width: 100%;
+}
+
+img.insert {
+    max-height: 98%;
+    width: auto !important;
+    display: block;
+    margin: 0 auto;
+    page-break-inside: avoid;
+    overflow: hidden;
+    /*clear: both;*/
+}
+
+p {
+    display: block;
+    text-indent: 20pt;
+}
+
+.chapter-header {
+    text-align: center;
+}
+
+h2 {
+    font-size: 1.15em;
+    margin-top: 1.5em;
+    margin-bottom: .5em;
+    line-height: 1.2em;
+    text-indent: 20pt;
+}
+
+hr.header {
+    display: block;
+    margin: 0.5em auto;
+    border-style: inset;
+    border-width: 1px;
+}
