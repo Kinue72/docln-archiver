@@ -32,7 +32,7 @@ func (b *Book) CrawlChapterBody(url string, retries int) string {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		log.Printf("status code: %d\n", resp.StatusCode)
+		log.Printf("status code: %d (%s)\n", resp.StatusCode, url)
 		return ""
 	}
 
@@ -116,12 +116,12 @@ var whitelistExts = []string{
 	".webp",
 }
 
-func (b *Book) CrawlImage(path string, referer bool, retries int) string {
+func (b *Book) CrawlImage(url string, referer bool, retries int) string {
 	if *retriesFlag > 0 && retries > *retriesFlag {
 		return ""
 	}
 
-	ext := filepath.Ext(path)
+	ext := filepath.Ext(url)
 
 	found := false
 	for _, e := range whitelistExts {
@@ -135,11 +135,11 @@ func (b *Book) CrawlImage(path string, referer bool, retries int) string {
 		ext = ".jpg"
 	}
 
-	imgPath := filepath.Join("./tmp", b.Id, HashString(path)+ext)
+	imgPath := filepath.Join("./tmp", b.Id, HashString(url)+ext)
 	if _, err := os.Stat(imgPath); err == nil {
 		ret, err := b.AddImage(imgPath, "")
 		if err != nil {
-			return b.CrawlImage(path, referer, retries+1)
+			return b.CrawlImage(url, referer, retries+1)
 		}
 		return ret
 	}
@@ -149,14 +149,14 @@ func (b *Book) CrawlImage(path string, referer bool, retries int) string {
 		ref = b.BaseUrl + "/"
 	}
 
-	resp, err := GetRequest(path, ref)
+	resp, err := GetRequest(url, ref)
 	if err != nil {
-		return b.CrawlImage(path, referer, retries+1)
+		return b.CrawlImage(url, referer, retries+1)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		log.Printf("status code: %d\n", resp.StatusCode)
+		log.Printf("status code: %d (%s)\n", resp.StatusCode, url)
 		return ""
 	}
 
@@ -164,12 +164,12 @@ func (b *Book) CrawlImage(path string, referer bool, retries int) string {
 	defer out.Close()
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
-		return b.CrawlImage(path, referer, retries+1)
+		return b.CrawlImage(url, referer, retries+1)
 	}
 
 	ret, err := b.AddImage(imgPath, "")
 	if err != nil {
-		return b.CrawlImage(path, referer, retries+1)
+		return b.CrawlImage(url, referer, retries+1)
 	}
 	return ret
 }

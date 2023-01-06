@@ -55,7 +55,7 @@ func main() {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		log.Fatalf("status code: %d %s", resp.StatusCode, resp.Status)
+		log.Fatalf("status code: %d (%s)", resp.StatusCode, *linkFlag)
 	}
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
