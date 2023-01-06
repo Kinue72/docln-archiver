@@ -146,7 +146,7 @@ func main() {
 		book.SetDescription(strings.Join(series.Description, "\n"))
 
 		epubCss, _ := book.AddCSS("./epub.css", "")
-		book.SetCover(book.CrawlImage(series.Cover, false, 0), epubCss)
+		book.SetCover(book.CrawlImage(vol.Cover, false, 0), epubCss)
 
 		for j, chap := range vol.Chapters {
 			fmt.Printf("Đang crawl chapter: %s\n", chap.Title)
