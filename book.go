@@ -109,12 +109,33 @@ func (b *Book) CrawlChapterBody(url string, retries int) string {
 	return sb.String()
 }
 
+var whitelistExts = []string{
+	".png",
+	".jpeg",
+	".jpg",
+	".webp",
+}
+
 func (b *Book) CrawlImage(path string, referer bool, retries int) string {
 	if *retriesFlag > 0 && retries > *retriesFlag {
 		return ""
 	}
 
-	imgPath := filepath.Join("./tmp", b.Id, HashString(path)+filepath.Ext(path))
+	ext := filepath.Ext(path)
+
+	found := false
+	for _, e := range whitelistExts {
+		if strings.EqualFold(e, ext) {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		ext = ".jpg"
+	}
+
+	imgPath := filepath.Join("./tmp", b.Id, HashString(path)+ext)
 	if _, err := os.Stat(imgPath); err == nil {
 		ret, err := b.AddImage(imgPath, "")
 		if err != nil {
