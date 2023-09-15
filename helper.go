@@ -4,12 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/alexsergivan/transliterator"
-	"golang.org/x/text/runes"
-	"golang.org/x/text/transform"
-	"golang.org/x/text/unicode/norm"
-	"golang.org/x/text/width"
 	"log"
 	"net/http"
 	"regexp"
@@ -17,6 +11,13 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/alexsergivan/transliterator"
+	"golang.org/x/text/runes"
+	"golang.org/x/text/transform"
+	"golang.org/x/text/unicode/norm"
+	"golang.org/x/text/width"
 )
 
 var reUrl = regexp.MustCompile("url\\('(.*?)'\\)")
@@ -45,8 +46,8 @@ func GetRequest(url, referer string) (*http.Response, error) {
 
 	if resp.StatusCode == 429 {
 		_ = resp.Body.Close()
-		fmt.Println("Vui lòng đợi 60s vì ăn rate limit (gay af)...")
-		time.Sleep(time.Second * 60)
+		fmt.Println("Vui lòng đợi 120s vì ăn rate limit (gay af)...")
+		time.Sleep(time.Second * 120)
 		return GetRequest(url, referer)
 	}
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	_ "embed"
 	"flag"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,6 +24,7 @@ var (
 	timeoutFlag = flag.Duration("timeout", time.Second*10, "http timeout")
 	noteFlag    = flag.Bool("note", true, "enable note")
 	linkFlag    = flag.String("link", "", "link to archive")
+	specVolFlag = flag.Bool("specvol", false, "displays the volume selection panel")
 )
 
 //go:embed epub.css
@@ -46,6 +49,17 @@ func init() {
 		defer f.Close()
 		_, _ = f.WriteString(cssFile)
 	}
+}
+
+func validVol(vol int, volList []int) bool {
+	found := false
+	for _, num := range volList {
+		if num == vol {
+			found = true
+			break
+		}
+	}
+	return found
 }
 
 func main() {
@@ -128,63 +142,99 @@ func main() {
 
 	_ = os.Mkdir(outputPath, 0700)
 	_ = os.Mkdir(filepath.Join("./tmp", series.Id), 0700)
+	intArray := []int{}
 
-	for i, vol := range series.Volumes {
-		fmt.Println("-----------------------------------")
-		fmt.Printf("Đang crawl volume %d: %s\n", i+1, vol.Title)
-		book := Book{
-			Epub:    epub.NewEpub(fmt.Sprintf("%s: Volume %d", vol.Title, i+1)),
-			Id:      series.Id,
-			BaseUrl: series.BaseUrl,
+	if *specVolFlag {
+		fmt.Println("Các Volume có sẵn:")
+		for i, vol := range series.Volumes {
+			fmt.Printf("   ● %d - %s\n", i+1, vol.Title)
 		}
+		scanner := bufio.NewScanner(os.Stdin)
 
-		book.SetTitle(series.Title + " - " + vol.Title)
-		book.SetAuthor(series.Author)
-		book.SetLang("vi")
-		book.SetIdentifier(*linkFlag)
+		fmt.Printf("Vui lòng thêm ' ' giữa các Volume (eg: 1 2 3...)\nNhập Volume muốn tải (skip = all): ")
+		scanner.Scan()
+		volString := scanner.Text()
 
-		book.SetDescription(strings.Join(series.Description, "\n"))
-
-		epubCss, _ := book.AddCSS("./epub.css", "")
-		book.SetCover(book.CrawlImage(vol.Cover, false, 0), epubCss)
-
-		for j, chap := range vol.Chapters {
-			fmt.Printf("Đang crawl chapter: %s\n", chap.Title)
-			body := book.CrawlChapterBody(chap.Url, 0)
-
-			if body == "" {
-				continue
+		if volString != "" {
+			volStringArray := strings.Fields(volString)
+			for _, str := range volStringArray {
+				num, err := strconv.Atoi(str)
+				if err != nil {
+					fmt.Printf("Volume '%s' có vẻ như không hợp lệ!\n", str)
+					continue
+				}
+				intArray = append(intArray, num)
 			}
-
-			// too lazy to normalize title
-			_, err = book.AddSection(body, chap.Title, fmt.Sprintf("chapter%d.xhtml", j), epubCss)
-			if err != nil {
-				log.Fatalln(err)
+		} else {
+			for i, _ := range series.Volumes {
+				intArray = append(intArray, i+1)
 			}
 		}
-
-		//header
-		{
-			var sb strings.Builder
-
-			sb.WriteString(`<h2 class="chapter-header">`)
-			sb.WriteString(series.Title)
-			sb.WriteString(`</h2> <hr class="header"/>`)
-
-			sb.WriteString("<p>" + fmt.Sprintf("Tác giả: %s - Minh hoạ: %s", series.Author, series.Artist) + "</p>")
-			sb.WriteString("<p>" + fmt.Sprintf("Dịch giả: %s - Nhóm dịch: %s", series.Translator, series.Group) + "</p>")
-			sb.WriteString("<p>Link gốc: " + `<a href="` + *linkFlag + `">` + *linkFlag + "</a></p>")
-
-			// too lazy to normalize title
-			_, err = book.AddSection(sb.String(), "Footer", "footer.xhtml", epubCss)
-			if err != nil {
-				log.Fatalln(err)
-			}
-		}
-
-		err = book.Write(filepath.Join(outputPath, fmt.Sprintf("%s %s - %d.epub", series.Id, NormalizeString(vol.Title), i+1)))
-		if err != nil {
-			log.Fatalln(err)
+	} else {
+		for i, _ := range series.Volumes {
+			intArray = append(intArray, i+1)
 		}
 	}
+
+	for i, vol := range series.Volumes {
+		if validVol(i+1, intArray) {
+			fmt.Println("-----------------------------------")
+			fmt.Printf("Đang crawl volume %d: %s\n", i+1, vol.Title)
+			book := Book{
+				Epub:    epub.NewEpub(fmt.Sprintf("%s: Volume %d", vol.Title, i+1)),
+				Id:      series.Id,
+				BaseUrl: series.BaseUrl,
+			}
+
+			book.SetTitle(series.Title + " - " + vol.Title)
+			book.SetAuthor(series.Author)
+			book.SetLang("vi")
+			book.SetIdentifier(*linkFlag)
+
+			book.SetDescription(strings.Join(series.Description, "\n"))
+
+			epubCss, _ := book.AddCSS("./epub.css", "")
+			book.SetCover(book.CrawlImage(vol.Cover, false, 0), epubCss)
+
+			for j, chap := range vol.Chapters {
+				fmt.Printf("Đang crawl chapter: %s\n", chap.Title)
+				body := book.CrawlChapterBody(chap.Url, 0)
+
+				if body == "" {
+					continue
+				}
+
+				// too lazy to normalize title
+				_, err = book.AddSection(body, chap.Title, fmt.Sprintf("chapter%d.xhtml", j), epubCss)
+				if err != nil {
+					log.Fatalln(err)
+				}
+			}
+
+			//header
+			{
+				var sb strings.Builder
+
+				sb.WriteString(`<h2 class="chapter-header">`)
+				sb.WriteString(series.Title)
+				sb.WriteString(`</h2> <hr class="header"/>`)
+
+				sb.WriteString("<p>" + fmt.Sprintf("Tác giả: %s - Minh hoạ: %s", series.Author, series.Artist) + "</p>")
+				sb.WriteString("<p>" + fmt.Sprintf("Dịch giả: %s - Nhóm dịch: %s", series.Translator, series.Group) + "</p>")
+				sb.WriteString("<p>Link gốc: " + `<a href="` + *linkFlag + `">` + *linkFlag + "</a></p>")
+
+				// too lazy to normalize title
+				_, err = book.AddSection(sb.String(), "Footer", "footer.xhtml", epubCss)
+				if err != nil {
+					log.Fatalln(err)
+				}
+			}
+
+			err = book.Write(filepath.Join(outputPath, fmt.Sprintf("%s %s - %d.epub", series.Id, NormalizeString(vol.Title), i+1)))
+			if err != nil {
+				log.Fatalln(err)
+			}
+		}
+	}
+	fmt.Println("\nDone!")
 }
