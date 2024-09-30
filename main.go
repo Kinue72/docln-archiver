@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -24,11 +25,12 @@ var (
 	timeoutFlag = flag.Duration("timeout", time.Second*10, "http timeout")
 	noteFlag    = flag.Bool("note", true, "enable note")
 	linkFlag    = flag.String("link", "", "link to archive")
-	specVolFlag = flag.Bool("specvol", false, "displays the volume selection panel")
+	specVolFlag = flag.Bool("specvol", true, "displays the volume selection panel")
 )
 
 //go:embed epub.css
 var cssFile string
+var re = regexp.MustCompile(`[\*\@\$\%\^\(\)]`)
 
 func init() {
 	flag.Parse()
@@ -90,7 +92,7 @@ func main() {
 	if attr, ok := doc.Find(".sharing-item").Attr("@click.prevent"); ok {
 		attr = strings.TrimSpace(attr)
 		attr = strings.TrimLeft(attr, "window.navigator.clipboard.writeText('")
-		attr = strings.TrimRight(attr, "')")
+		attr = strings.TrimRight(attr, "'); $store.toast.show('Copy thành công!')")
 		split := strings.Split(attr, "/truyen/")
 
 		series.BaseUrl = split[0]
@@ -115,7 +117,7 @@ func main() {
 
 	doc.Find(".volume-list").Each(func(_ int, selection *goquery.Selection) {
 		var vol Volume
-		vol.Title = strings.TrimSpace(selection.Find(".sect-title").Text())
+		vol.Title = re.ReplaceAllString(strings.TrimSpace(selection.Find(".sect-title").Text()), "")
 		vol.Cover = ParseImageLink(selection.Find(".volume-cover > a > .a6-ratio > div"))
 
 		selection.Find(".list-chapters > li").Each(func(_ int, selection *goquery.Selection) {
@@ -197,7 +199,7 @@ func main() {
 			book.SetCover(book.CrawlImage(vol.Cover, false, 0), epubCss)
 
 			for j, chap := range vol.Chapters {
-				fmt.Printf("Đang crawl chapter: %s\n", chap.Title)
+				fmt.Printf("Đang crawl chapter: %s                       \n", chap.Title) //White space is used to hide the imperfections of the countdown timer
 				body := book.CrawlChapterBody(chap.Url, 0)
 
 				if body == "" {

@@ -46,8 +46,12 @@ func GetRequest(url, referer string) (*http.Response, error) {
 
 	if resp.StatusCode == 429 {
 		_ = resp.Body.Close()
-		fmt.Println("Vui lòng đợi 120s vì ăn rate limit (gay af)...")
-		time.Sleep(time.Second * 120)
+		for i := 1; i <= 120; i++ {
+			fmt.Printf("\nVui lòng đợi %ds vì ăn rate limit (gay af)...", 120-i)
+			time.Sleep(time.Second)
+			fmt.Printf("\033[1A\033[K")
+		}
+		fmt.Println()
 		return GetRequest(url, referer)
 	}
 
