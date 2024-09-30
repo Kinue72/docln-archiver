@@ -116,7 +116,7 @@ func main() {
 
 	doc.Find(".volume-list").Each(func(_ int, selection *goquery.Selection) {
 		var vol Volume
-		re := regexp.MustCompile(`[\*\@\$\%\^\(\)]`)
+		var re = regexp.MustCompile(`[\*\@\$\%\^\(\)]`)
 		vol.Title = re.ReplaceAllString(strings.TrimSpace(selection.Find(".sect-title").Text()), "")
 		vol.Cover = ParseImageLink(selection.Find(".volume-cover > a > .a6-ratio > div"))
 
