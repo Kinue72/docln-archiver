@@ -21,11 +21,12 @@ import (
 const UserAgent = "Mozilla/5.0 (Windows NT 10.0; rv:108.0) Gecko/20100101 Firefox/108.0"
 
 var (
-	retriesFlag = flag.Int("retries", 10, "retries count")
-	timeoutFlag = flag.Duration("timeout", time.Second*10, "http timeout")
-	noteFlag    = flag.Bool("note", true, "enable note")
-	linkFlag    = flag.String("link", "", "link to archive")
-	specVolFlag = flag.Bool("specvol", true, "displays the volume selection panel")
+	retriesFlag   = flag.Int("retries", 10, "retries count")
+	timeoutFlag   = flag.Duration("timeout", time.Second*10, "http timeout")
+	noteFlag      = flag.Bool("note", true, "enable note")
+	linkFlag      = flag.String("link", "", "link to archive")
+	specVolFlag   = flag.Bool("specvolume", true, "displays the volume selection panel")
+	rateLimitFlag = flag.Int("ratelimit", 90, "rate limit wait in seconds")
 )
 
 //go:embed epub.css
@@ -122,9 +123,13 @@ func main() {
 
 		selection.Find(".list-chapters > li").Each(func(_ int, selection *goquery.Selection) {
 			a := selection.Find(".chapter-name > a")
+			href := a.AttrOr("href", "")
+			if !strings.HasPrefix(href, "http") {
+				href = series.BaseUrl + href
+			}
 			vol.Chapters = append(vol.Chapters, Chapter{
 				Title: strings.TrimSpace(a.Text()),
-				Url:   series.BaseUrl + a.AttrOr("href", ""),
+				Url:   href,
 			})
 		})
 
@@ -153,7 +158,7 @@ func main() {
 		}
 		scanner := bufio.NewScanner(os.Stdin)
 
-		fmt.Printf("Vui lòng thêm ' ' giữa các Volume (eg: 1 2 3...)\nNhập Volume muốn tải (skip = all): ")
+		fmt.Printf("Chọn Volume (vd: 1 2 3, Enter = tất cả): ")
 		scanner.Scan()
 		volString := scanner.Text()
 

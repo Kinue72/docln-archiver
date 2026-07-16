@@ -58,12 +58,23 @@ func (b *Book) CrawlChapterBody(url string, retries int) string {
 
 	sb.WriteString(`<div class="reading-content">`)
 
-	doc.Find("#chapter-content > p").Each(func(_ int, selection *goquery.Selection) {
-		if _, ok := selection.Attr("id"); !ok {
-			return
+	protected := doc.Find("#chapter-c-protected")
+	if protected.Length() > 0 {
+		dataS := protected.AttrOr("data-s", "")
+		dataK := protected.AttrOr("data-k", "")
+		dataC := protected.AttrOr("data-c", "")
+		decrypted, err := DecryptChapter(dataS, dataK, dataC)
+		if err != nil {
+			log.Printf("decrypt error: %v", err)
+			return ""
 		}
-
-		//map img
+		sb.WriteString(decrypted)
+	} else {
+		doc.Find("#chapter-content > p").Each(func(_ int, selection *goquery.Selection) {
+			if _, ok := selection.Attr("id"); !ok {
+				return
+			}
+			//map img
 		selection.Find("img").Each(func(_ int, selection *goquery.Selection) {
 			src := selection.AttrOr("src", "")
 			if src == "" {
@@ -103,7 +114,9 @@ func (b *Book) CrawlChapterBody(url string, retries int) string {
 				sb.WriteString(")</p>")
 			}
 		}
-	})
+		})
+	}
+
 	sb.WriteString("</div>")
 
 	return sb.String()
