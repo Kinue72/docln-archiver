@@ -1,8 +1,11 @@
 ## **HakoVN-Archiver**
 
+> [!WARNING]
+> The primary domain **docln.net** is behind Cloudflare and blocks Go's TLS fingerprint. Use **docln.sbs** instead.
+
 Bạn đã quá mệt mỏi khi lưu web novel dài vài trăm chương để đọc offline thì đây là giải pháp cho bạn!
 
-![image](https://cdn.discordapp.com/attachments/1024814890201919560/1060696456513728543/IMG_0098.png)
+![image](https://media.discordapp.net/attachments/796591175448133633/1527261279440605276/image.png?ex=6a7116a8&is=6a6fc528&hm=21e6ef91084efc24b29105080aa09b9e667041bbee3bee5ffde1577dcab80dc2&=&format=webp&quality=lossless)
 
 ## Using
 
@@ -12,7 +15,7 @@ Bạn đã quá mệt mỏi khi lưu web novel dài vài trăm chương để đ
 ./docln-archiver -link "url goes here"
 ```
 
-[video tutorial](https://cdn.discordapp.com/attachments/1024814890201919560/1060925878210678885/2023-01-06_21-17-03.mp4)
+[video tutorial](https://www.youtube.com/watch?v=fm80naououI)
 
 ## Building
 

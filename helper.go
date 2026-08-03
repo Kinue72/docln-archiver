@@ -2,11 +2,14 @@ package main
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 	"unicode"
@@ -46,8 +49,8 @@ func GetRequest(url, referer string) (*http.Response, error) {
 
 	if resp.StatusCode == 429 {
 		_ = resp.Body.Close()
-		for i := 1; i <= 120; i++ {
-			fmt.Printf("\nVui lòng đợi %ds vì ăn rate limit (gay af)...", 120-i)
+		for i := *rateLimitFlag; i > 0; i-- {
+			fmt.Printf("\nVui lòng đợi %ds vì ăn rate limit (gay af)...", i)
 			time.Sleep(time.Second)
 			fmt.Printf("\033[1A\033[K")
 		}
@@ -95,6 +98,68 @@ func NormalizeString(input string) string {
 	}
 
 	return reNotAllowChars.ReplaceAllString(output, "")
+}
+
+func DecryptChapter(dataS, dataK, dataC string) (string, error) {
+	var chunks []string
+	if err := json.Unmarshal([]byte(dataC), &chunks); err != nil {
+		return "", err
+	}
+	if len(chunks) == 0 {
+		return "", nil
+	}
+
+	sort.Slice(chunks, func(i, j int) bool {
+		return chunks[i][:4] < chunks[j][:4]
+	})
+
+	var sb strings.Builder
+	for _, chunk := range chunks {
+		encoded := chunk[4:]
+		var decoded []byte
+		var err error
+
+		switch dataS {
+		case "xor_shuffle":
+			decoded, err = xorDecrypt(encoded, dataK)
+		case "base64_reverse":
+			decoded, err = base64Decode(reverseString(encoded))
+		default:
+			decoded, err = base64Decode(encoded)
+		}
+		if err != nil {
+			return "", err
+		}
+		sb.Write(decoded)
+	}
+
+	html := sb.String()
+	html = reNote.ReplaceAllString(html, "")
+	return html, nil
+}
+
+func xorDecrypt(encoded, key string) ([]byte, error) {
+	raw, err := base64Decode(encoded)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]byte, len(raw))
+	for i := range raw {
+		out[i] = raw[i] ^ key[i%len(key)]
+	}
+	return out, nil
+}
+
+func base64Decode(s string) ([]byte, error) {
+	return base64.StdEncoding.DecodeString(s)
+}
+
+func reverseString(s string) string {
+	runes := []rune(s)
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		runes[i], runes[j] = runes[j], runes[i]
+	}
+	return string(runes)
 }
 
 func IsStringASCII(input string) bool {
