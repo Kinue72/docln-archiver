@@ -5,7 +5,7 @@
 
 Bạn đã quá mệt mỏi khi lưu web novel dài vài trăm chương để đọc offline thì đây là giải pháp cho bạn!
 
-![image](https://media.discordapp.net/attachments/796591175448133633/1527261279440605276/image.png?ex=6a5a0468&is=6a58b2e8&hm=97f33706121668d9616daa44a90ec6bc2ed9dbf94558e913b9e1160fd9b570f5&=&format=webp&quality=lossless)
+![image](https://media.discordapp.net/attachments/796591175448133633/1527261279440605276/image.png?ex=6a7116a8&is=6a6fc528&hm=21e6ef91084efc24b29105080aa09b9e667041bbee3bee5ffde1577dcab80dc2&=&format=webp&quality=lossless)
 
 ## Using
 
